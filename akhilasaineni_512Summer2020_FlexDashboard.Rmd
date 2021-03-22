@@ -1,0 +1,119 @@
+---
+title: "FlexDashboard Assignment"
+author: "Akhila Saineni and Nihar Garlapati"
+date: "7/23/2020"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    vertical_layout: scroll
+    social: menu
+    source_code: embed
+---
+
+```{r setup, include=FALSE}
+setwd("/Users/akhilasaineni/Downloads/HU/2020Summer/DataViz512/10_0723V")
+
+library(flexdashboard)
+library(readr)
+library(expss)
+library(dplyr)
+library(ggplot2)
+
+data = read_csv("avocado.csv")
+
+data = subset(data, data$region=='TotalUS')
+
+summary(data)
+
+data$Date = factor(data$Date)
+data$type = factor(data$type)
+data$region = factor(data$region)
+data$year = factor(data$year)
+
+data$Date=as.Date(data$Date)
+data$`Total Volume`=as.numeric(data$`Total Volume`)
+
+```
+
+
+Data Visualisation
+=====================================  
+
+Row {data-width=650}
+-----------------------------------------------------------------------
+
+### Summary Table {data-width=500}
+
+```{r}
+data = apply_labels(data, type="Avocado Type")
+
+data %>%
+  tab_cells(AveragePrice, `Total Volume`) %>% 
+  tab_cols(year) %>%
+  tab_rows(type) %>%
+  tab_stat_fun("Median"=w_median, "Std. dev."=w_sd, "Valid N" = w_n, method=list) %>%
+  tab_pivot() %>%
+  tab_transpose()
+```
+
+### Average Price by Total Volume {data-width=500}
+
+```{r}
+ggplot(data, aes(x=log(`Total Volume`), y=AveragePrice,color=type)) +
+  geom_point() +
+  ggtitle("Average Price by Total Volume")  +
+  theme_classic() +  
+  geom_smooth(method = "nls", 
+              formula = y ~ a * x + b, 
+              se = F,
+              method.args = list(start = list(a = 0.2, b = 0.2)))+
+  theme(plot.title = element_text(size = 15,hjust = 0.5),
+        plot.subtitle = element_text(size = 8) )
+```
+
+Row {data-width=650}
+-----------------------------------------------------------------------
+
+### Total Organic Volume over a Period of time {data-width=500}
+
+```{r}
+organic = subset(data, data$type=='organic')
+
+ggplot(organic, aes(x=Date, y=`Total Volume`)) +
+  geom_bar(stat='identity',fill="lightgreen") +  
+  geom_smooth(color="blue") +
+  theme_classic() +
+  ggtitle("Total Organic Volume over a Period of time") +
+  theme(plot.title = element_text(size = 15,hjust = 0.5),
+        plot.subtitle = element_text(size = 8) )
+```
+
+### Total Conventional Volume over a Period of time {data-width=500}
+
+```{r}
+conventional = subset(data, data$type=='conventional')
+
+ggplot(conventional, aes(x=Date, y=`Total Volume`)) +
+  geom_bar(stat='identity',fill="orange") +  
+  geom_smooth(color="Blue") +
+  theme_classic() +
+  ggtitle("Total Conventional Volume over a Period of time") +
+  theme(plot.title = element_text(size = 15,hjust = 0.5),
+        plot.subtitle = element_text(size = 8) )
+
+```
+
+
+Writeup / Description {data-orientation=rows}
+=====================================   
+### Summary:   
+The following data set consists of national retail volume of avocado from 2015 until 2018.There are a total of 338 observation, 169 each per type of avocado(Organic,Conventional). 
+There are higher number of conventional avocados in the market when compared to organic. The average price of conventional avocado is inversely correlated with the total volume, However the price of organic avocados remain the same irrespective of the total volume available. There is also a significant increase in the production of organic avocados over a period of time, but the production of conventional avocados remain constant. 
+
+This tells us that there is an increasing demand in the consumption of organic avocados even though the average price is higher compared to conventional avocados.
+
+### Bibliography:   
+
+Hass Avocado Board -  Annual Reports and Independent Evaluations https://hassavocadoboard.com/inside-hab/reports-evaluations/
+
+expss: Tables with Labels in R, 2019-07-06. Retrieved from https://gdemin.github.io/expss/
